@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part-Time Job Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>FlexiWork</h1>
+                <p>Find Your Perfect Part-Time Job</p>
+            </div>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Search jobs, companies, or keywords...">
+                <button id="search-button"><i class="fas fa-search"></i></button>
+            </div>
+            <div class="header-options">
+                <div class="language-selector">
+                    <select id="language-selector">
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="ar">العربية</option>
+                        <option value="hi">हिन्दी</option>
+                        <option value="te">తెలుగు</option>
+                        <option value="zh">中文</option>
+                    </select>
+                </div>
+                <div class="location-selector">
+                    <select id="country-selector">
+                        <option value="global">Global</option>
+                        <option value="us">United States</option>
+                        <option value="in">India</option>
+                        <option value="uk">United Kingdom</option>
+                        <option value="ca">Canada</option>
+                        <option value="au">Australia</option>
+                        <option value="eu">Europe</option>
+                    </select>
+                </div>
+            </div>
+            <div class="auth-buttons">
+                <button id="login-button">Login</button>
+                <button id="register-button">Register</button>
+                <div id="user-profile" class="hidden">
+                    <span id="username">User</span>
+                    <div class="dropdown">
+                        <button id="view-profile">My Profile</button>
+                        <button id="view-saved-jobs">Saved Jobs</button>
+                        <button id="view-applications">My Applications</button>
+                        <button id="view-resume">My Resume</button>
+                        <button id="logout">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Category Navigation -->
+    <div class="category-nav">
+        <div class="container">
+            <button class="category-btn active" data-category="all">All Jobs</button>
+            <button class="category-btn" data-category="retail">Retail</button>
+            <button class="category-btn" data-category="hospitality">Hospitality</button>
+            <button class="category-btn" data-category="tutoring">Tutoring</button>
+            <button class="category-btn" data-category="delivery">Delivery</button>
+            <button class="category-btn" data-category="cleaning">Cleaning</button>
+            <button class="category-btn" data-category="catering">Catering</button>
+            <button class="category-btn" data-category="security">Security</button>
+            <button class="category-btn" data-category="office">Office</button>
+            <button class="category-btn" data-category="healthcare">Healthcare</button>
+            <button class="category-btn" data-category="it">IT</button>
+            <button class="category-btn" data-category="handicapped">Handicapped</button>
+            <button class="category-btn" data-category="other">Other</button>
+        </div>
+    </div>
+
+    <!-- Job Statistics -->
+    <div class="job-stats">
+        <div class="container">
+            <div class="stat-item">
+                <h3 id="total-jobs">0</h3>
+                <p>Total Jobs</p>
+            </div>
+            <div class="stat-item">
+                <h3 id="new-today">0</h3>
+                <p>New Today</p>
+            </div>
+            <div class="stat-item">
+                <h3 id="urgent-hiring">0</h3>
+                <p>Urgent Hiring</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disability-Friendly Jobs Banner -->
+    <div class="disability-banner">
+        <div class="container">
+            <div class="disability-content">
+                <div class="disability-icon">
+                    <i class="fas fa-wheelchair"></i>
+                </div>
+                <div class="disability-text">
+                    <h3>Looking for Disability-Friendly Jobs?</h3>
+                    <p>We have positions with accommodations for people with disabilities</p>
+                </div>
+                <button class="view-disability-jobs" onclick="showDisabilityFriendlyJobs()">View Disability-Friendly Jobs</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Companies -->
+    <div class="featured-companies">
+        <div class="container">
+            <h2>Featured Companies</h2>
+            <div class="company-list">
+                <!-- Company cards will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="main-content">
+            <!-- Filters -->
+            <div class="filters">
+                <h3>Advanced Filters</h3>
+                <div class="filter-group">
+                    <label for="category-filter">Category</label>
+                    <select id="category-filter">
+                        <option value="all">All Categories</option>
+                        <option value="retail">Retail</option>
+                        <option value="hospitality">Hospitality</option>
+                        <option value="tutoring">Tutoring</option>
+                        <option value="delivery">Delivery</option>
+                        <option value="cleaning">Cleaning</option>
+                        <option value="catering">Catering</option>
+                        <option value="security">Security</option>
+                        <option value="office">Office</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="it">IT</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="location-filter">Location</label>
+                    <select id="location-filter">
+                        <option value="all">All Locations</option>
+                        <option value="downtown">Downtown</option>
+                        <option value="north">North</option>
+                        <option value="south">South</option>
+                        <option value="east">East</option>
+                        <option value="west">West</option>
+                        <option value="remote">Remote</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="salary-filter">Minimum Salary</label>
+                    <div class="salary-slider">
+                        <input type="range" id="salary-filter" min="0" max="50" step="5" value="0">
+                        <span id="salary-value">$0/hr</span>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label for="experience-filter">Experience Level</label>
+                    <select id="experience-filter">
+                        <option value="all">All Levels</option>
+                        <option value="entry">Entry Level</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="experienced">Experienced</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="schedule-filter">Schedule</label>
+                    <select id="schedule-filter">
+                        <option value="all">All Schedules</option>
+                        <option value="weekdays">Weekdays</option>
+                        <option value="weekends">Weekends</option>
+                        <option value="evenings">Evenings</option>
+                        <option value="mornings">Mornings</option>
+                        <option value="flexible">Flexible</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="education-filter">Education</label>
+                    <select id="education-filter">
+                        <option value="all">All Education Levels</option>
+                        <option value="high-school">High School</option>
+                        <option value="associate">Associate Degree</option>
+                        <option value="bachelor">Bachelor's Degree</option>
+                        <option value="master">Master's Degree</option>
+                        <option value="none">No Requirements</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Job Type</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="job-type" value="part-time" checked> Part-Time
+                        </label>
+                        <label>
+                            <input type="checkbox" name="job-type" value="contract"> Contract
+                        </label>
+                        <label>
+                            <input type="checkbox" name="job-type" value="temporary"> Temporary
+                        </label>
+                        <label>
+                            <input type="checkbox" name="job-type" value="internship"> Internship
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>Special Features</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="features" value="urgent"> Urgent Hiring
+                        </label>
+                        <label>
+                            <input type="checkbox" name="features" value="remote"> Remote Work
+                        </label>
+                        <label>
+                            <input type="checkbox" name="features" value="new"> New Jobs
+                        </label>
+                        <label>
+                            <input type="checkbox" name="features" value="benefits"> With Benefits
+                        </label>
+                        <label>
+                            <input type="checkbox" name="features" value="accessible"> Accessible Jobs
+                        </label>
+                        <label>
+                            <input type="checkbox" name="features" value="disability-friendly"> Disability-Friendly
+                        </label>
+                    </div>
+                </div>
+                <div class="filter-buttons">
+                    <button id="apply-filters">Apply Filters</button>
+                    <button id="reset-filters">Reset Filters</button>
+                </div>
+            </div>
+
+            <!-- Job Listings -->
+            <div class="job-listings-container">
+                <div class="job-listings-header">
+                    <div class="view-options">
+                        <button id="grid-view" class="active"><i class="fas fa-th-large"></i> Grid</button>
+                        <button id="list-view"><i class="fas fa-list"></i> List</button>
+                    </div>
+                    <div class="sort-options">
+                        <label for="sort-options">Sort by:</label>
+                        <select id="sort-options">
+                            <option value="relevance">Relevance</option>
+                            <option value="date">Date Posted</option>
+                            <option value="salary-high">Salary (High to Low)</option>
+                            <option value="salary-low">Salary (Low to High)</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="job-listings" class="job-listings grid-view">
+                    <!-- Job listings will be dynamically added here -->
+                </div>
+                <div class="pagination">
+                    <button id="prev-page" disabled>Previous</button>
+                    <div id="page-numbers" class="page-numbers">
+                        <!-- Page numbers will be dynamically added here -->
+                    </div>
+                    <button id="next-page">Next</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>FlexiWork</h3>
+                    <p>Find your perfect part-time job with FlexiWork. We connect job seekers with employers offering flexible work opportunities.</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">Browse Jobs</a></li>
+                        <li><a href="#">For Employers</a></li>
+                        <li><a href="#">Career Advice</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Job Categories</h3>
+                    <ul>
+                        <li><a href="#">Retail Jobs</a></li>
+                        <li><a href="#">Hospitality Jobs</a></li>
+                        <li><a href="#">Tutoring Jobs</a></li>
+                        <li><a href="#">Delivery Jobs</a></li>
+                        <li><a href="#">Office Jobs</a></li>
+                        <li><a href="#">IT Jobs</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Newsletter</h3>
+                    <p>Subscribe to our newsletter for the latest job opportunities and career advice.</p>
+                    <div class="newsletter-form">
+                        <input type="email" placeholder="Your email address">
+                        <button>Subscribe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 FlexiWork. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Cookies Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Login</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required>
+                </div>
+                <div class="form-group remember-me">
+                    <label>
+                        <input type="checkbox"> Remember me
+                    </label>
+                    <a href="#">Forgot password?</a>
+                </div>
+                <button type="submit">Login</button>
+                <p class="form-switch">Don't have an account? <a href="#" id="switch-to-register">Register</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Register</h2>
+        <form id="register-form">
+        <div class="form-group">
+            <label for="register-name">Full Name</label>
+            <input type="text" id="register-name" required autocomplete="name">
+        </div>
+
+        <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" required autocomplete="username">
+        </div>
+
+        <div class="form-group">
+            <label for="register-phone">Phone Number</label>
+            <input type="tel" id="register-phone" pattern="[0-9]*" required autocomplete="tel">
+            <span class="validation-message">Please enter numbers only</span>
+        </div>
+
+        <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+            <label for="register-confirm-password">Confirm Password</label>
+            <input type="password" id="register-confirm-password" required autocomplete="new-password">
+        </div>
+
+      <div class="form-group terms">
+        <label>
+          <input type="checkbox" required>
+          I agree to the <a href="#">Terms and Conditions</a>
+        </label>
+      </div>
+        <button type="submit">Register</button>
+        <p class="form-switch">Already have an account? <a href="#" id="switch-to-login">Login</a></p>
+        </form>
+    </div>
+    </div>
+<form id="otp-form">
+        <input class="otp-input" type="text" maxlength="1">
+        <input class="otp-input" type="text" maxlength="1">
+        <input class="otp-input" type="text" maxlength="1">
+        <input class="otp-input" type="text" maxlength="1">
+        <input class="otp-input" type="text" maxlength="1">
+        <input class="otp-input" type="text" maxlength="1">
+        <button type="submit">Verify OTP</button>
+</form>
+
+<div id="otp-modal" style="display: none;">
+  <!-- Modal content -->
+</div>
+
+    <!-- Job Detail Modal -->
+    <div id="job-detail-modal" class="modal">
+        <div class="modal-content job-detail-modal">
+            <span class="close">&times;</span>
+            <div id="job-detail-container">
+                <!-- Job details will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Apply Job Modal -->
+    <div id="apply-job-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Apply for <span id="apply-job-title"></span></h2>
+            <form id="apply-job-form">
+                <div class="form-group">
+                    <label for="apply-name">Full Name</label>
+                    <input type="text" id="apply-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="apply-email">Email</label>
+                    <input type="email" id="apply-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="apply-phone">Phone Number</label>
+                    <input type="tel" id="apply-phone" pattern="[0-9]*" required>
+                    <span class="validation-message">Please enter numbers only</span>
+                </div>
+                <div class="form-group">
+                    <label for="apply-resume">Resume</label>
+                    <div class="file-input">
+                        <input type="file" id="apply-resume" accept=".pdf,.doc,.docx">
+                        <label for="apply-resume">Choose File</label>
+                        <span class="file-name">No file chosen</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="apply-cover-letter">Cover Letter (Optional)</label>
+                    <textarea id="apply-cover-letter" rows="5"></textarea>
+                </div>
+                <button type="submit">Submit Application</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal">
+        <div class="modal-content profile-modal">
+            <span class="close">&times;</span>
+            <div class="profile-tabs">
+                <button class="tab-btn active" data-tab="profile-info">Profile Info</button>
+                <button class="tab-btn" data-tab="saved-jobs">Saved Jobs</button>
+                <button class="tab-btn" data-tab="applications">Applications</button>
+                <button class="tab-btn" data-tab="resume">Resume</button>
+            </div>
+            <div class="tab-content" id="profile-info">
+                <h2>Profile Information</h2>
+                <div class="profile-info-content">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="profile-details">
+                        <div class="profile-detail-item">
+                            <span class="label">Name:</span>
+                            <span id="profile-name">John Doe</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="label">Email:</span>
+                            <span id="profile-email">john.doe@example.com</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="label">Phone:</span>
+                            <span id="profile-phone">+1 234 567 8901</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="label">Joined:</span>
+                            <span id="profile-date">January 1, 2023</span>
+                        </div>
+                        <div class="profile-detail-item">
+                            <span class="label">Location:</span>
+                            <span id="profile-location">New York, USA</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button>Edit Profile</button>
+                    <button>Change Password</button>
+                </div>
+            </div>
+            <div class="tab-content" id="saved-jobs" style="display: none;">
+                <h2>Saved Jobs</h2>
+                <div id="saved-jobs-container">
+                    <!-- Saved jobs will be dynamically added here -->
+                </div>
+            </div>
+            <div class="tab-content" id="applications" style="display: none;">
+                <h2>My Applications</h2>
+                <div class="applications-container">
+                    <p class="no-items">You haven't applied to any jobs yet.</p>
+                </div>
+            </div>
+            <div class="tab-content" id="resume" style="display: none;">
+                <h2>My Resume</h2>
+                <div class="resume-container">
+                    <div class="resume-section">
+                        <h3>Personal Information</h3>
+                        <div class="resume-info">
+                            <div class="resume-info-item">
+                                <span class="label">Name:</span>
+                                <span id="resume-name">John Doe</span>
+                            </div>
+                            <div class="resume-info-item">
+                                <span class="label">Email:</span>
+                                <span id="resume-email">john.doe@example.com</span>
+                            </div>
+                            <div class="resume-info-item">
+                                <span class="label">Phone:</span>
+                                <span id="resume-phone">+1 234 567 8901</span>
+                            </div>
+                            <div class="resume-info-item">
+                                <span class="label">Location:</span>
+                                <span id="resume-location">New York, USA</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="resume-section">
+                        <h3>Education</h3>
+                        <p class="no-items">No education information added yet.</p>
+                        <button class="add-button">Add Education</button>
+                    </div>
+                    <div class="resume-section">
+                        <h3>Experience</h3>
+                        <p class="no-items">No experience information added yet.</p>
+                        <button class="add-button">Add Experience</button>
+                    </div>
+                    <div class="resume-section">
+                        <h3>Skills</h3>
+                        <p class="no-items">No skills added yet.</p>
+                        <button class="add-button">Add Skills</button>
+                    </div>
+                    <div class="resume-actions">
+                        <button>Upload Resume</button>
+                        <button>Download Resume</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Internship Popup -->
+    <div id="internship-popup" class="popup">
+        <div class="popup-content">
+            <span class="close-popup">&times;</span>
+            <h2>Summer Internship Opportunities!</h2>
+            <p>Looking for summer internships? We have exciting opportunities for students in various fields.</p>
+            <div class="popup-actions">
+                <button>View Internships</button>
+                <button class="secondary">Learn More</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="toast">
+        <div class="toast-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="toast-message">Notification message</div>
+    </div>
+
+    <!-- Pages for job application and user profile sections -->
+    <div id="job-application-page" class="page">
+        <!-- Content will be dynamically added here -->
+    </div>
+    
+    <div id="user-profile-page" class="page">
+        <!-- Content will be dynamically added here -->
+    </div>
+    
+    <div id="saved-jobs-page" class="page">
+        <!-- Content will be dynamically added here -->
+    </div>
+    
+    <div id="applications-page" class="page">
+        <!-- Content will be dynamically added here -->
+    </div>
+    
+    <div id="resume-page" class="page">
+        <!-- Content will be dynamically added here -->
+    </div>
+
+    <!-- Company Jobs Page -->
+    <div id="company-jobs-page" class="page">
+        <!-- Content will be dynamically added here -->
+    </div>
+
+    <div id="disability-jobs-page" class="page">
+  <!-- Content will be dynamically added here -->
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>
