@@ -1,11 +1,18 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 const multer = require('multer');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const { MongoMemoryServer } = require('mongodb-memory-server');
+
+// Import models
+const User = require('./models/User');
+const JobApplication = require('./models/JobApplication');
+const Job = require('./models/Job');
+const { generateJobs } = require('./utils/jobGenerator');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -16,23 +23,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public')); // serve your frontend files, including favicon.ico
 
-// PostgreSQL Connection Pool
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
-
-// Test DB connection
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('❌ DB connection failed:', err);
-  } else {
-    console.log('✅ DB connected at:', res.rows[0].now);
+// MongoDB Connection
+const connectDB = async () => {
+  try {
+    const mongoUri = process.env.MONGODB_URI || (await MongoMemoryServer.create()).getUri();
+    await mongoose.connect(mongoUri);
+    console.log(`✅ MongoDB connected (${process.env.MONGODB_URI ? 'from .env' : 'in-memory'})`);
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error);
+    process.exit(1);
   }
-});
+};
+
+connectDB();
 
 // Multer config for resume uploads
 const storage = multer.diskStorage({
@@ -61,47 +64,32 @@ const upload = multer({
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER, // your gmail email
-    pass: process.env.EMAIL_PASS, // your gmail app password or real password
+    user: process.env.EMAIL_USER || 'test@example.com', // your gmail email
+    pass: process.env.EMAIL_PASS || 'testpass', // your gmail app password or real password
   },
 });
 
 // Temporary OTP store (replace with Redis for production)
 const otpStore = new Map();
 
-// DB tables initialization
+// Initialize database with jobs
 async function initDB() {
   try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
-        phone VARCHAR(20),
-        password VARCHAR(100) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-      
-      CREATE TABLE IF NOT EXISTS job_applications (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        job_id INTEGER NOT NULL,
-        resume_path VARCHAR(255) NOT NULL,
-        cover_letter TEXT,
-        interest_statement TEXT,
-        availability TEXT[],
-        status VARCHAR(50) DEFAULT 'In Review',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('✅ Database tables initialized');
+    // Check if jobs already exist
+    const existingJobs = await Job.countDocuments();
+    if (existingJobs === 0) {
+      const jobs = generateJobs();
+      await Job.insertMany(jobs, { ordered: false });
+      console.log(`✅ Seeded ${jobs.length} jobs in MongoDB`);
+    } else {
+      console.log('✅ Jobs already exist in database');
+    }
   } catch (error) {
     console.error('❌ Error initializing database:', error);
   }
 }
 
-// Call DB init on startup
-initDB();
+// DB init will be called in startServer
 
 // Routes
 
@@ -114,8 +102,8 @@ app.post('/api/register', async (req, res) => {
   }
 
   try {
-    const userCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-    if (userCheck.rows.length > 0) {
+    const userCheck = await User.findOne({ email });
+    if (userCheck) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
 
@@ -127,16 +115,17 @@ app.post('/api/register', async (req, res) => {
     otpStore.set(email + '_data', { name, phone, password });
 
     // Send OTP email
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Your FlexiWork Registration OTP',
-      html: `
-        <h3>Welcome to FlexiWork!</h3>
-        <p>Your OTP for registration is: <strong>${otp}</strong></p>
-        <p>This OTP will expire in 10 minutes.</p>
-      `,
-    });
+    console.log(`OTP for ${email}: ${otp}`); // Log OTP for testing
+    // await transporter.sendMail({
+    //   from: process.env.EMAIL_USER,
+    //   to: email,
+    //   subject: 'Your FlexiWork Registration OTP',
+    //   html: `
+    //     <h3>Welcome to FlexiWork!</h3>
+    //     <p>Your OTP for registration is: <strong>${otp}</strong></p>
+    //     <p>This OTP will expire in 10 minutes.</p>
+    //   `,
+    // });
 
     return res.json({ success: true, message: 'OTP sent successfully' });
   } catch (error) {
@@ -171,11 +160,15 @@ app.post('/api/verify-otp', async (req, res) => {
       return res.status(400).json({ success: false, message: 'OTP expired' });
     }
 
-    // Insert user into DB
-    const insertRes = await pool.query(
-      'INSERT INTO users (name, email, phone, password) VALUES ($1, $2, $3, $4) RETURNING id',
-      [userData.name, email, userData.phone, userData.password]
-    );
+    // Create user in MongoDB
+    const newUser = new User({
+      name: userData.name,
+      email,
+      phone: userData.phone,
+      password: userData.password,
+    });
+
+    const savedUser = await newUser.save();
 
     // Clear OTP data
     otpStore.delete(email);
@@ -185,15 +178,45 @@ app.post('/api/verify-otp', async (req, res) => {
       success: true,
       message: 'Registration successful',
       user: {
-        id: insertRes.rows[0].id,
-        name: userData.name,
-        email,
-        phone: userData.phone,
+        id: savedUser._id,
+        name: savedUser.name,
+        email: savedUser.email,
+        phone: savedUser.phone,
       },
     });
   } catch (error) {
     console.error('❌ OTP verification error:', error);
     return res.status(500).json({ success: false, message: 'Verification failed' });
+  }
+});
+
+// Login
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
+  try {
+    const user = await User.findOne({ email, password });
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+      },
+    });
+  } catch (error) {
+    console.error('❌ Login error:', error);
+    return res.status(500).json({ success: false, message: 'Login failed' });
   }
 });
 
@@ -212,17 +235,21 @@ app.post('/api/apply-job', upload.single('resume'), async (req, res) => {
   try {
     const availabilityArr = availability ? availability.split(',') : [];
 
-    const insertRes = await pool.query(
-      `INSERT INTO job_applications 
-       (user_id, job_id, resume_path, cover_letter, interest_statement, availability) 
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [userId, jobId, req.file.path, coverLetter || null, interestStatement || null, availabilityArr]
-    );
+    const newApplication = new JobApplication({
+      userId,
+      jobId: parseInt(jobId),
+      resumePath: req.file.path,
+      coverLetter: coverLetter || '',
+      interestStatement: interestStatement || '',
+      availability: availabilityArr,
+    });
+
+    const savedApplication = await newApplication.save();
 
     return res.json({
       success: true,
       message: 'Application submitted successfully',
-      applicationId: insertRes.rows[0].id,
+      applicationId: savedApplication._id,
     });
   } catch (error) {
     console.error('❌ Job application error:', error);
@@ -243,15 +270,23 @@ app.get('/api/applications/:userId', async (req, res) => {
   const userId = req.params.userId;
 
   try {
-    const result = await pool.query(
-      'SELECT * FROM job_applications WHERE user_id = $1 ORDER BY created_at DESC',
-      [userId]
-    );
+    const applications = await JobApplication.find({ userId }).sort({ createdAt: -1 });
 
-    return res.json({ success: true, applications: result.rows });
+    return res.json({ success: true, applications });
   } catch (error) {
     console.error('❌ Error fetching applications:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch applications' });
+  }
+});
+
+// Get all jobs
+app.get('/api/jobs', async (req, res) => {
+  try {
+    const jobs = await Job.find().sort({ postedDate: -1 });
+    return res.json({ success: true, jobs });
+  } catch (error) {
+    console.error('❌ Error fetching jobs:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch jobs' });
   }
 });
 
@@ -273,11 +308,9 @@ const startServer = async () => {
     // Handle graceful shutdown
     process.on('SIGINT', () => {
       console.log('\n🛑 Server shutting down...');
-      server.close(() => {
-        pool.end(() => {
-          console.log('Database pool closed.');
-          process.exit(0);
-        });
+      mongoose.connection.close(() => {
+        console.log('MongoDB connection closed.');
+        process.exit(0);
       });
     });
   } catch (err) {

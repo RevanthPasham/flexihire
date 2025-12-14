@@ -78,8 +78,25 @@ const featuredCompanies = [
   { name: "Netflix", logo: "https://logo.clearbit.com/netflix.com", jobCount: 0 },
 ]
 
-// Generate a large dataset of jobs (at least 50 per category)
-function generateJobs() {
+// Fetch jobs from API
+async function fetchJobs() {
+  try {
+    const response = await fetch('/api/jobs');
+    const data = await response.json();
+    if (data.success) {
+      return data.jobs;
+    } else {
+      console.error('Failed to fetch jobs:', data.message);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching jobs:', error);
+    return [];
+  }
+}
+
+// Generate a large dataset of jobs (at least 50 per category) - REMOVED, now using API
+// function generateJobs() {
   const categories = [
     "retail",
     "hospitality",
@@ -1268,9 +1285,9 @@ function hideDisabilityJobsPage() {
 }
 
 // Initialize the page
-document.addEventListener("DOMContentLoaded", () => {
-  // Generate jobs data
-  allJobs = generateJobs()
+document.addEventListener("DOMContentLoaded", async () => {
+  // Fetch jobs data from API
+  allJobs = await fetchJobs()
   filteredJobs = [...allJobs]
 
   // Update job statistics
@@ -1781,7 +1798,7 @@ function showJobApplicationPage(jobId) {
 
   // Add event listener to form submission
   const applicationForm = document.getElementById("job-application-form")
-  applicationForm.addEventListener("submit", (e) => {
+  applicationForm.addEventListener("submit", async (e) => {
     e.preventDefault()
     if (!isLoggedIn()) {
       alert("Please login to apply for this job.")
@@ -1790,21 +1807,33 @@ function showJobApplicationPage(jobId) {
       return
     }
 
-    // In a real application, this would submit the application to a database
-    alert("Your application has been submitted successfully!")
+    const userData = JSON.parse(localStorage.getItem("user"))
+    const formData = new FormData()
+    formData.append('userId', userData.id)
+    formData.append('jobId', jobId)
+    formData.append('resume', document.getElementById("apply-resume").files[0])
+    formData.append('coverLetter', document.getElementById("apply-cover-letter").value)
+    formData.append('interestStatement', document.getElementById("apply-interest").value)
+    const availability = Array.from(document.querySelectorAll('input[name="availability"]:checked')).map(cb => cb.value).join(',')
+    formData.append('availability', availability)
 
-    // Store application in localStorage for demo purposes
-    const applications = JSON.parse(localStorage.getItem("applications") || "[]")
-    applications.push({
-      jobId,
-      date: new Date().toISOString(),
-      status: "In Review",
-    })
-    localStorage.setItem("applications", JSON.stringify(applications))
-
-    // Hide job application page
-    hideJobApplicationPage()
-    showToast("Application submitted successfully!")
+    try {
+      const response = await fetch('/api/apply-job', {
+        method: 'POST',
+        body: formData
+      })
+      const data = await response.json()
+      if (data.success) {
+        alert("Your application has been submitted successfully!")
+        hideJobApplicationPage()
+        showToast("Application submitted successfully!")
+      } else {
+        alert(data.message || 'Application submission failed')
+      }
+    } catch (error) {
+      console.error('Application submission error:', error)
+      alert('Application submission failed. Please try again.')
+    }
   })
 
   // Add this after the form is created and event listeners are set up
@@ -2788,7 +2817,7 @@ otpInputs.forEach((input, index) => {
 })
 
 // Form submissions
-loginForm.addEventListener("submit", (e) => {
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault()
   const email = document.getElementById("login-email").value
   const password = document.getElementById("login-password").value
@@ -2799,9 +2828,27 @@ loginForm.addEventListener("submit", (e) => {
     return
   }
 
-  // In a real application, this would validate against a database
-  if (email && password) {
-    loginUser(email)
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+      loginUser(data.user);
+      showToast('Login successful!');
+    } else {
+      alert(data.message || 'Login failed');
+    }
+  } catch (error) {
+    console.error('Login error:', error);
+    alert('Login failed. Please try again.');
   }
 })
 const input = document.getElementById("register-confirm-password-1"); // use the correct new ID
