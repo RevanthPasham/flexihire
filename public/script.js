@@ -78,25 +78,14 @@ const featuredCompanies = [
   { name: "Netflix", logo: "https://logo.clearbit.com/netflix.com", jobCount: 0 },
 ]
 
-// Fetch jobs from API
+// Fetch jobs from static data
 async function fetchJobs() {
-  try {
-    const response = await fetch('/api/jobs');
-    const data = await response.json();
-    if (data.success) {
-      return data.jobs;
-    } else {
-      console.error('Failed to fetch jobs:', data.message);
-      return [];
-    }
-  } catch (error) {
-    console.error('Error fetching jobs:', error);
-    return [];
-  }
+  // Return static job data instead of API call
+  return generateJobs();
 }
 
 // Generate a large dataset of jobs (at least 50 per category) - REMOVED, now using API
-// function generateJobs() {
+function generateJobs() {
   const categories = [
     "retail",
     "hospitality",
